@@ -1,19 +1,14 @@
 import type { Component } from 'solid-js';
 import { Button } from '@/components/ui/button';
-import { effect } from 'solid-js/web';
+import { FileInput } from './components/ui/file-input';
 
 const App: Component = () => {
-  effect(()=> {
-    const ping =async ()=> {
-      const response = await fetch("/api/ping")
-      const text = await response.text()
-      console.log(text)
-    }
-    ping()
-  })
   return (
     <div>
-      <Button>click me</Button>
+      <form class='max-w-2xl mx-auto py-5 space-y-4'>
+      <FileInput/>
+      <Button type='submit'>save</Button>
+      </form>
     </div>
   );
 };
