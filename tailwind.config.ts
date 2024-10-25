@@ -101,6 +101,9 @@ export default {
         'content-hide': 'content-hide 0.2s ease-out',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
       },
+      fontFamily: {
+        inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [tailwindAnimate, tailwindChildren],

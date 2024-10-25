@@ -1,0 +1,5 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('./Inter-Variable.ttf') format('truetype');
+  font-display: 'fallback';
+}
