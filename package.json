@@ -3,14 +3,17 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "start": "./dist/server",
-    "dev": "vite",
-    "build": "vite build && go build -o ./dist/server src/server/main.go",
+    "start": "./dist/main",
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:vite": "vite",
+    "dev:go": "PATH=$PATH:$HOME/go/bin air -c .air.toml",
+    "build": "vite build && go build -o ./dist/main src/server/main.go",
     "serve": "vite preview"
   },
   "license": "MIT",
   "devDependencies": {
     "autoprefixer": "^10.4.17",
+    "concurrently": "^9.0.1",
     "postcss": "^8.4.33",
     "solid-devtools": "^0.29.3",
     "tailwindcss": "^3.4.1",
