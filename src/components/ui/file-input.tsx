@@ -9,9 +9,10 @@ const FileInput: Component = () => {
       Drag your file here! <br />
       or click to select
       <input
+        onChange={el => console.log(el.target.value)}
         type="file"
         name="file"
-        class="absolute inset-0 cursor-pointer opacity-0"
+        class="-0 absolute inset-0 cursor-pointer"
       />
     </Label>
   );
