@@ -5,9 +5,9 @@ import { FileInput } from './components/ui/file-input';
 const App: Component = () => {
   return (
     <div>
-      <form class='max-w-2xl mx-auto py-5 space-y-4'>
-      <FileInput/>
-      <Button type='submit'>save</Button>
+      <form class="mx-auto max-w-2xl space-y-4 py-5">
+        <FileInput />
+        <Button type="submit">save</Button>
       </form>
     </div>
   );
