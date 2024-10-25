@@ -1,34 +1,20 @@
-## Usage
+This is an app designed to upload files to a backup device with an easy to use UI. It's still on development, so maybe check it out later to see the current progress :)
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+## Requirements
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+- [go](https://go.dev/) `1.23.2` or higher
+- [bun](https://bun.sh/) `1.1.22` or higher
 
-```bash
-$ npm install # or pnpm install or yarn install
-```
+### Optional for development
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+- [air](https://github.com/air-verse/air) `1.61.1` or higher
 
-## Available Scripts
+## Notes for development
 
-In the project directory, you can run:
+The `npm run dev` command with span 2 servers with `concurrently`. You'll want to use the one running on port `3000`, as that's the vite server, which comes with HMR. Avoid using the server on port `8080` unless you're testing api related logic
 
-### `npm run dev` or `npm start`
+## Troubleshooting
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Cannot run `air` when running `npm run dev`
 
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+Make sure you have the following alias in your bash aliases declarations `alias air='$(go env GOPATH)/bin/air'`
