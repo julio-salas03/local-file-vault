@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "start": "vite",
+    "start": "./dist/server",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && go build -o ./dist/server src/server/main.go",
     "serve": "vite preview"
   },
   "license": "MIT",
