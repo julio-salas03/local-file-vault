@@ -1,3 +1,6 @@
+import tailwindChildren from 'tailwind-children';
+import tailwindAnimate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['variant', ['.dark &', '[data-kb-theme="dark"] &']],
@@ -100,5 +103,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [tailwindAnimate, tailwindChildren],
 };
