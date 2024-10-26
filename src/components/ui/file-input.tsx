@@ -18,7 +18,7 @@ const FileInput: Component = () => {
         />
         <Label
           for="id"
-          class="relative block border-4 border-dashed border-border py-10 text-center text-lg peer-focus:outline peer-focus:outline-2 peer-focus:outline-offset-2"
+          class="relative block border-4 border-dashed border-border py-10 text-center text-lg font-bold peer-focus:outline peer-focus:outline-2 peer-focus:outline-offset-2"
         >
           Drag your file here! <br />
           or click to select
