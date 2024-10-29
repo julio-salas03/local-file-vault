@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-func uploadHandler(w http.ResponseWriter, r *http.Request)  {
+func UploadHandler(w http.ResponseWriter, r *http.Request)  {
     r.ParseMultipartForm(10<<20)
     file, handler, err:= r.FormFile("file")
 
@@ -47,15 +48,59 @@ func uploadHandler(w http.ResponseWriter, r *http.Request)  {
     fmt.Fprint(w,"Successfully uploaded file")
 }
 
+func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request) {
+    acceptedEncodings := r.Header.Values("Accept-Encoding")
+    var filepath strings.Builder
+    filepath.WriteString(filename)
+    
+    for i := 0; i < len(acceptedEncodings); i++ {
+        if strings.Contains(acceptedEncodings[i],"br") {
+            w.Header().Add("Content-Encoding","br")
+            filepath.WriteString(".br")
+            break
+        } 
+    }
+
+    bytes, err := os.ReadFile(filepath.String())
+    
+    if err != nil {
+        fmt.Println(err)
+        w.WriteHeader(http.StatusInternalServerError)
+        fmt.Fprintf(w,"Internal Server Error")
+        return
+    }
+    
+    w.Write(bytes)
+}
+
 func main() {
-    http.Handle("/", http.FileServer(http.Dir("./dist")))
-    http.HandleFunc("/api/upload", uploadHandler)
+    http.HandleFunc("/api/upload", UploadHandler)
 
-	portNum := ":8080"
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Add("Content-Type","text/html; charset=utf-8")
+        ServeOptimizedFile("./dist/index.html",w,r)
+    })
 
-    log.Println("Started on port", portNum)
+    http.HandleFunc("/index.js", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Add("Content-Type","text/javascript;charset=UTF-8")
+        ServeOptimizedFile("./dist/index.js",w,r)
+    })
 
-    err := http.ListenAndServe(portNum, nil)
+    http.HandleFunc("/index.css", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Add("Content-Type","text/css; charset=utf-8")
+        ServeOptimizedFile("./dist/index.css",w,r)
+    })
+
+    http.HandleFunc("/Inter-Variable.ttf", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Add("Content-Type","font/ttf")
+        ServeOptimizedFile("./dist/Inter-Variable.ttf",w,r)
+    })
+
+	portNumber := ":8080"
+
+    log.Println("Started on port", portNumber)
+
+    err := http.ListenAndServe(portNumber, nil)
 
     if err != nil {
         log.Fatal(err)
