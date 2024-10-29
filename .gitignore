@@ -8,4 +8,5 @@ dist
 tmp
 
 # Uploads
-uploads
+/uploads/*
+!/uploads/.gitkeep
