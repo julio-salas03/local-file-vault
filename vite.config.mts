@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { compression } from 'vite-plugin-compression2';
 // import devtools from 'solid-devtools/vite';
 
 export default defineConfig({
@@ -12,6 +13,10 @@ export default defineConfig({
     // devtools(),
     solidPlugin(),
     tsconfigPaths(),
+    compression({
+      include: /\.(html|xml|css|json|js|mjs|svg|yaml|yml|toml|ttf)$/,
+      algorithm: 'brotliCompress',
+    }),
   ],
   server: {
     port: 3000,
@@ -25,5 +30,12 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
+    rollupOptions: {
+      output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].js',
+        assetFileNames: '[name][extname]',
+      },
+    },
   },
 });
