@@ -21,6 +21,10 @@ wait_for_postgres
 docker cp "$( dirname "$0" )/db-seed.sql" "$CONTAINER_NAME":/
 docker exec -t "$CONTAINER_NAME" psql -U postgres -a -f /db-seed.sql
 
+# Create default upload folders
+mkdir uploads/shared
+mkdir uploads/admin
+
 # Install dependencies
 bun install --frozen-lockfile
 
