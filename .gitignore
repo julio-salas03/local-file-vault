@@ -8,15 +8,7 @@ dist
 tmp
 
 # Uploads
-
-# Ignore everything in "uploads"
-/uploads/**/*
-# Keep the "admin" and "shared" folders
-!/uploads/
-!/uploads/admin/
-!/uploads/admin/.gitkeep
-!/uploads/shared/
-!/uploads/shared/.gitkeep
+/uploads
 
 # Docker
 postgres-data

@@ -12,7 +12,6 @@
     "build:go": "go build -C src/server -o \"$(pwd)/dist/main\"",
     "prettier:write": "prettier --write .",
     "prettier:check": "prettier --check .",
-    "serve": "vite preview",
     "init": "./scripts/init/start.sh"
   },
   "license": "MIT",
