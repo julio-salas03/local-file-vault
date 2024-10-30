@@ -9,7 +9,7 @@
     "dev:go": "PATH=$PATH:/usr/local/go/bin air -c .air.toml",
     "build": "npm run build:vite && npm run build:go",
     "build:vite": "vite build",
-    "build:go": "go build -o ./dist/main src/server/main.go",
+    "build:go": "go build -C src/server -o \"$(pwd)/dist/main\"",
     "prettier:write": "prettier --write .",
     "prettier:check": "prettier --check .",
     "serve": "vite preview"
