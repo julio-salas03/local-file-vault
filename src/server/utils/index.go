@@ -2,9 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request) {
@@ -30,4 +34,16 @@ func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Write(bytes)
+}
+
+func LoadEnvFile() {
+
+	directory, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal("Could read working directory. Unable to load .env file")
+	}
+
+	godotenv.Load(path.Join(directory, ".env"))
+
 }

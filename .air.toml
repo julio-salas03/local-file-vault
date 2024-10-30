@@ -1,0 +1,4 @@
+# air.toml
+[build]
+cmd = "go build -C src/server -o \"$(pwd)/tmp/main\" main.go"
+exclude_dir = ["node_modules","dist","postgres-data"]

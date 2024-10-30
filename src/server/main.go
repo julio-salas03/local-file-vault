@@ -49,6 +49,10 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	utils.LoadEnvFile()
+
+	fmt.Println(os.Getenv("DATABASE_URL"))
+
 	http.HandleFunc("/api/upload", UploadHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
