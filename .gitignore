@@ -9,7 +9,7 @@ tmp
 
 # Uploads
 
-# Ignore everything "uploads"
+# Ignore everything in "uploads"
 /uploads/**/*
 # Keep the "admin" and "shared" folders
 !/uploads/
@@ -20,3 +20,6 @@ tmp
 
 # Docker
 postgres-data
+
+# Environment Variables
+.env
