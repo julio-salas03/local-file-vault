@@ -6,7 +6,7 @@
     "start": "./dist/main",
     "dev": "concurrently \"npm:dev:*\"",
     "dev:vite": "vite",
-    "dev:go": "PATH=$PATH:/usr/local/go/bin air -c .air.toml",
+    "dev:go": "cd src/server && PATH=$PATH:$HOME/go/bin air -c .air.toml",
     "build": "npm run build:vite && npm run build:go",
     "build:vite": "vite build",
     "build:go": "go build -C src/server -o \"$(pwd)/dist/main\"",
