@@ -11,6 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const AuthCookieName = "Authenticated-User"
+
 func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request) {
 	acceptedEncodings := r.Header.Values("Accept-Encoding")
 	var filepath strings.Builder
@@ -37,7 +39,6 @@ func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request)
 }
 
 func LoadEnvFile() {
-
 	directory, err := os.Getwd()
 
 	if err != nil {
@@ -45,5 +46,4 @@ func LoadEnvFile() {
 	}
 
 	godotenv.Load(path.Join(directory, ".env"))
-
 }
