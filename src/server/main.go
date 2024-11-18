@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"local-file-vault/auth"
 	"local-file-vault/utils"
 	"log"
 	"net/http"
@@ -13,7 +14,7 @@ func main() {
 
 	http.HandleFunc("/api/upload", utils.HandleFileUpload)
 
-	http.HandleFunc("/api/login", utils.HandleLogin)
+	http.HandleFunc("/api/login", auth.HandleLogin)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
@@ -43,9 +44,7 @@ func main() {
 
 	log.Println("Started on port", port)
 
-	err := http.ListenAndServe(port, nil)
-
-	if err != nil {
-		log.Fatal(err)
+	if err := http.ListenAndServe(port, nil); err != nil {
+		log.Fatalf("Server failed to start on port %s: %v", port, err)
 	}
 }

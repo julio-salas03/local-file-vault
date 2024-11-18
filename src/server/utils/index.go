@@ -1,10 +1,8 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"local-file-vault/db"
 	"log"
 	"net/http"
 	"os"
@@ -13,11 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 )
 
-const AuthCookieName = "Authenticated-User"
+const AuthCookieName = "JWT-Auth"
 
 func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request) {
 	acceptedEncodings := r.Header.Values("Accept-Encoding")
@@ -54,56 +51,6 @@ func LoadEnvFile() {
 	godotenv.Load(path.Join(directory, ".env"))
 }
 
-func HandleLogin(w http.ResponseWriter, r *http.Request) {
-	// TODO: refactor this to something more secure, like a JWT
-	err := r.ParseMultipartForm(10 << 20)
-	var retrievedUser string
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Internal server error")
-		return
-	}
-
-	username := r.Form.Get("username")
-	password := r.Form.Get("password")
-
-	if len(password) <= 0 || len(username) <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "You must provide both a username and password to login")
-		return
-	}
-
-	err = db.Query(func(conn *pgx.Conn) error {
-		return conn.QueryRow(context.Background(), "select username from users where username=$1 and password=$2", username, password).Scan(&retrievedUser)
-	})
-
-	if len(retrievedUser) <= 0 {
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, "Couldn't find user with the provided username and password")
-		return
-	}
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Internal server error")
-		return
-	}
-
-	cookie := http.Cookie{
-		Name:     AuthCookieName,
-		Value:    retrievedUser,
-		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	http.SetCookie(w, &cookie)
-	fmt.Fprintf(w, "Authenticated")
-}
-
 func HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("file")
@@ -119,9 +66,9 @@ func HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Upload time: %v\n", time.Now())
 	fmt.Printf("File Name: %v\n", handler.Filename)
 	fmt.Printf("File Size: %v\n", handler.Size)
-	fmt.Printf("MIME Header: %v\n", handler.Header)
+	fmt.Printf("MIME  : %v\n", handler.Header.Get("Content-Type"))
 
-	tempFile, err := os.Create(filepath.Join("uploads", filepath.Base(handler.Filename)))
+	tempFile, err := os.Create(filepath.Join("uploads/shared", filepath.Base(handler.Filename)))
 
 	if err != nil {
 		fmt.Println(err)
