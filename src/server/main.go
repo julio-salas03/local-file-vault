@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"local-file-vault/auth"
+	"local-file-vault/uploads"
 	"local-file-vault/utils"
 	"log"
 	"net/http"
@@ -12,7 +13,15 @@ import (
 func main() {
 	utils.LoadEnvFile()
 
-	http.HandleFunc("/api/upload", utils.HandleFileUpload)
+	http.HandleFunc("/api/upload", uploads.HandleFileUpload)
+
+	http.HandleFunc("/api/files", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			uploads.GetFiles(w, r)
+		} else if r.Method == "POST" {
+			return
+		}
+	})
 
 	http.HandleFunc("/api/login", auth.HandleLogin)
 
