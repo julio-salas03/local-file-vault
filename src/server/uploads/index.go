@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -69,10 +70,18 @@ func GetFiles(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		download, err := url.JoinPath("api/file/shared", file.Name())
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
 		var fileData = map[string]interface{}{
-			"name":    file.Name(),
-			"size":    file.Size(),
-			"lastmod": file.ModTime().UTC(),
+			"name":     file.Name(),
+			"size":     file.Size(),
+			"lastmod":  file.ModTime().UTC(),
+			"download": download,
 		}
 
 		files = append(files, fileData)

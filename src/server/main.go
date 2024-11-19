@@ -45,6 +45,8 @@ func main() {
 		utils.ServeOptimizedFile("./dist/Inter-Variable.ttf", w, r)
 	})
 
+	http.Handle("/api/file/", http.StripPrefix("/api/file/", http.FileServer(http.Dir("uploads"))))
+
 	port := fmt.Sprintf(":%s", os.Getenv("PORT"))
 
 	if port == ":" {

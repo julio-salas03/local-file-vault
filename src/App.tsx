@@ -14,6 +14,7 @@ const FILE_LIST_SCHEMA = z.array(
     size: z.number(),
     name: z.string(),
     lastmod: z.string(),
+    download: z.string(),
   })
 );
 
@@ -51,7 +52,9 @@ const App: Component = () => {
                     </span>
                   </div>
                 </div>
-                <button
+                <a
+                  href={item.download}
+                  download={item.name}
                   class={buttonVariants({
                     variant: 'ghost',
                     class: 'flex-shrink-0 !p-2',
@@ -59,7 +62,7 @@ const App: Component = () => {
                 >
                   <span class="sr-only">download file</span>
                   <CloudDownload width="2em" height="2em" />
-                </button>
+                </a>
               </li>
             )}
           </For>

@@ -27,6 +27,7 @@ const UploadForm: Component = () => {
             const text = await response.text();
             toast(text);
             setIsOpen(false);
+            window.location.reload();
           }}
           class="space-y-4 py-5"
         >
