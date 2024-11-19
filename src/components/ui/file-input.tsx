@@ -1,6 +1,6 @@
-import type { Component, ComponentProps } from 'solid-js';
-import { createSignal, splitProps } from 'solid-js';
-import { cn, getFileName } from '@/lib/utils';
+import type { Component } from 'solid-js';
+import { createSignal } from 'solid-js';
+import { getFileName } from '@/lib/utils';
 import { Label } from './label';
 
 const FileInput: Component = () => {
@@ -9,7 +9,7 @@ const FileInput: Component = () => {
     <div>
       <div class="relative">
         <input
-          onChange={e => setFileName(getFileName(e.currentTarget.value))}
+          onChange={e => setFileName(getFileName(e.currentTarget.value)!)}
           required
           id="file"
           type="file"
@@ -20,7 +20,7 @@ const FileInput: Component = () => {
           for="id"
           class="relative block border-4 border-dashed border-border py-10 text-center text-lg font-bold peer-focus:outline peer-focus:outline-2 peer-focus:outline-offset-2"
         >
-          Drag your file here! <br />
+          Drag your file(s) here! <br />
           or click to select
         </Label>
       </div>

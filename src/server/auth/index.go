@@ -53,14 +53,13 @@ func GenerateAuthenticationJWT(user string) (string, error) {
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	err := r.ParseMultipartForm(10 << 20)
 
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		fmt.Println(err)
 		return
 	}
-
 	username := strings.TrimSpace(r.Form.Get("username"))
 
 	if username == "" {
