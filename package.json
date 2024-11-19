@@ -29,6 +29,7 @@
     "vite-plugin-solid": "^2.8.2"
   },
   "dependencies": {
+    "@corvu/drawer": "^0.2.2",
     "@kobalte/core": "^0.13.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

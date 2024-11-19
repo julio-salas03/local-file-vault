@@ -6,8 +6,20 @@ import { effect } from 'solid-js/web';
 import { z } from 'zod';
 import { filesizeToHumanReadable } from './lib/utils';
 import dayjs from 'dayjs';
+import { Button } from '@/components/ui/button';
+import Dots from '@/components/icons/dots';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import CloudDownload from './components/icons/cloud-download';
-import { buttonVariants } from './components/ui/button';
+import { Separator } from './components/ui/separator';
+import Trash from './components/icons/trash';
 
 const FILE_LIST_SCHEMA = z.array(
   z.object({
@@ -52,17 +64,68 @@ const App: Component = () => {
                     </span>
                   </div>
                 </div>
-                <a
-                  href={item.download}
-                  download={item.name}
-                  class={buttonVariants({
-                    variant: 'ghost',
-                    class: 'flex-shrink-0 !p-2',
-                  })}
-                >
-                  <span class="sr-only">download file</span>
-                  <CloudDownload width="2em" height="2em" />
-                </a>
+                <Drawer>
+                  <DrawerTrigger
+                    as={Button<'button'>}
+                    class="p-2"
+                    variant="ghost"
+                  >
+                    <span class="sr-only">download file</span>
+                    <Dots width="2em" height="2em" />
+                  </DrawerTrigger>
+                  <DrawerContent class="px-5">
+                    <div class="mx-auto w-full max-w-sm pb-5">
+                      <DrawerHeader class="px-0 text-left">
+                        <DrawerTitle class="line-clamp-1 !text-lg">
+                          {item.name}
+                        </DrawerTitle>
+                        <DrawerDescription>
+                          <div class="text-base opacity-80">
+                            <span>{filesizeToHumanReadable(item.size)}</span>
+                            {' - '}
+                            <span>
+                              {dayjs(item.lastmod).format(
+                                'MMM DD, YYYY, hh:mm'
+                              )}
+                            </span>
+                          </div>
+                        </DrawerDescription>
+                      </DrawerHeader>
+                      <Separator />
+                      <ul class="mt-5 grid grid-cols-1 gap-2 text-lg">
+                        <li class="bg-background">
+                          <DrawerClose
+                            as="a"
+                            href={item.download}
+                            download={item.name}
+                            class="grid grid-cols-12 font-semibold"
+                          >
+                            <CloudDownload
+                              class="col-span-2 mx-auto"
+                              width="2rem"
+                              height="2rem"
+                            />
+                            <span>Download</span>
+                          </DrawerClose>
+                        </li>
+                        <li class="bg-background text-destructive">
+                          <DrawerClose
+                            as="button"
+                            class="grid grid-cols-12 font-semibold opacity-70"
+                            disabled
+                          >
+                            <Trash
+                              class="col-span-2 mx-auto"
+                              width="1.5rem"
+                              height="1.5rem"
+                            />
+                            Delete
+                          </DrawerClose>
+                        </li>
+                      </ul>
+                    </div>
+                  </DrawerContent>
+                </Drawer>
               </li>
             )}
           </For>
