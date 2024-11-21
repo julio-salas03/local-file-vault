@@ -23,7 +23,9 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/api/login", auth.HandleLogin)
+	http.HandleFunc("/api/user/login", auth.HandleLogin)
+
+	http.HandleFunc("/api/user/auth", auth.HandleAuthenticate)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
@@ -31,7 +33,7 @@ func main() {
 	})
 
 	http.HandleFunc("/index.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "text/javascript;charset=UTF-8")
+		w.Header().Add("Content-Type", "text/javascript; charset=UTF-8")
 		utils.ServeOptimizedFile("./dist/index.js", w, r)
 	})
 

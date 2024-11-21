@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"local-file-vault/db"
 	"log"
@@ -35,7 +36,7 @@ func GetJWTSecret() string {
 func GenerateAuthenticationJWT(user string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user,
-		"exp": GetAuthTokenExpireTime(),
+		"exp": GetAuthTokenExpireTime().Unix(),
 	})
 
 	secretKey, err := base64.StdEncoding.DecodeString(GetJWTSecret())
@@ -136,6 +137,53 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(time.Until(expirationTime).Seconds()),
 	}
 
+	response := map[string]string{
+		"username":     dbUser,
+		"uploadFolder": dbUser,
+	}
+
 	http.SetCookie(w, &cookie)
-	w.Write([]byte("Logged in"))
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
+	authCookie, err := r.Cookie(AuthCookieName)
+
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println(err)
+		return
+	}
+
+	token, err := jwt.Parse(authCookie.Value, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return base64.StdEncoding.DecodeString(GetJWTSecret())
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		subject, _ := claims["sub"].(string)
+
+		response := map[string]string{
+			"username":     subject,
+			"uploadFolder": subject,
+		}
+
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+
+	} else {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("Invalid token claims or token invalid:", err)
+		return
+	}
 }

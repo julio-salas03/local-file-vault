@@ -3,21 +3,26 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { TextField, TextFieldInput } from './ui/text-field';
 import { toast } from 'solid-sonner';
+import { AUTH_USER_SCHEMA, useAuthContext } from '../lib/auth';
 
 const LoginForm: Component = () => {
+  const { setAuth } = useAuthContext();
   return (
     <form
-      onSubmit={async e => {
+      onSubmit={async function (e) {
         e.preventDefault();
-        const data = new FormData(e.currentTarget);
-        console.log(data.get('username'));
-        const response = await fetch('/api/login', {
+        const response = await fetch('/api/user/login', {
           method: 'POST',
           body: new FormData(e.currentTarget),
         });
-        const text = await response.text();
-        toast(text);
-        //window.location.reload();
+        const data = await response.json();
+        const parse = AUTH_USER_SCHEMA.safeParse(data);
+
+        if (!parse.success) {
+          return toast("Couldn't log you in");
+        }
+        setAuth('authUser', parse.data);
+        toast('Logged In');
       }}
       class="space-y-3"
     >
@@ -25,13 +30,18 @@ const LoginForm: Component = () => {
         Username
       </Label>
       <TextField>
-        <TextFieldInput id="username" name="username" type="text" />
+        <TextFieldInput required id="username" name="username" type="text" />
       </TextField>
       <Label for="password" class="block">
         Password
       </Label>
       <TextField>
-        <TextFieldInput id="password" name="password" type="password" />
+        <TextFieldInput
+          required
+          id="password"
+          name="password"
+          type="password"
+        />
       </TextField>
       <Button type="submit">Login</Button>
     </form>
