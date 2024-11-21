@@ -7,6 +7,8 @@ import {
 } from 'solid-js';
 import { z } from 'zod';
 import { createStore, SetStoreFunction } from 'solid-js/store';
+import { ServerResponseSchema } from './utils';
+import { APIError } from './errors';
 
 export const AUTH_USER_SCHEMA = z.object({
   username: z.string(),
@@ -34,15 +36,21 @@ export const AuthProvider: Component<{ children: JSXElement }> = props => {
   });
 
   createEffect(async () => {
-    const response = await fetch('/api/user/auth');
-    const data = await response.json();
-    const parse = AUTH_USER_SCHEMA.safeParse(data);
+    try {
+      const response = await fetch('/api/user/auth');
+      const _data = await response.json();
+      const schema = ServerResponseSchema(AUTH_USER_SCHEMA);
+      const parse = schema.parse(_data);
 
-    if (!parse.success) {
-      console.log(parse.error);
-      return;
+      if (parse.type === 'error') {
+        throw new APIError(parse.message, parse.errorCode);
+      }
+
+      setAuth('authUser', parse.data);
+    } catch (error) {
+      // Temporally log the error
+      console.error(error);
     }
-    setAuth('authUser', parse.data);
   });
 
   return (

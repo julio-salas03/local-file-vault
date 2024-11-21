@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { z } from 'zod';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,3 +34,19 @@ export const filesizeToHumanReadable = (
 
   return size + 'B';
 };
+
+export function ServerResponseSchema<T extends z.ZodType>(data: T) {
+  const successfulResponse = z.object({
+    data,
+    message: z.string(),
+    type: z.literal('success'),
+  });
+
+  const errorResponse = z.object({
+    errorCode: z.string(),
+    message: z.string(),
+    type: z.literal('error'),
+  });
+
+  return successfulResponse.or(errorResponse);
+}

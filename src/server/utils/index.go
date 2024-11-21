@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -44,4 +45,31 @@ func LoadEnvFile() {
 	}
 
 	godotenv.Load(path.Join(directory, ".env"))
+}
+
+type APIResponse struct {
+	ErrorCode string                 `json:"errorCode,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	Message   string                 `json:"message"`
+}
+
+func WriteAPIResponse(w http.ResponseWriter, response APIResponse) {
+	responseType := "success"
+
+	if response.ErrorCode != "" {
+		responseType = "error"
+	}
+
+	wrappedResponse := struct {
+		APIResponse
+		Type string `json:"type"`
+	}{
+		APIResponse: response,
+		Type:        responseType,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(wrappedResponse); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }

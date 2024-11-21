@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"local-file-vault/db"
+	"local-file-vault/errors"
+	"local-file-vault/utils"
 	"log"
 	"net/http"
 	"os"
@@ -153,8 +155,12 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 	authCookie, err := r.Cookie(AuthCookieName)
 
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		response := utils.APIResponse{
+			ErrorCode: errors.Unauthorized,
+			Message:   fmt.Sprintf("Missing '%s' cookie in request header", AuthCookieName),
+		}
+		utils.WriteAPIResponse(w, response)
 		return
 	}
 
@@ -166,24 +172,46 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		fmt.Println(err)
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		subject, _ := claims["sub"].(string)
-
-		response := map[string]string{
-			"username":     subject,
-			"uploadFolder": subject,
+		w.WriteHeader(http.StatusUnauthorized)
+		response := utils.APIResponse{
+			ErrorCode: errors.BadJWT,
+			Message:   err.Error(),
 		}
-
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		}
-
-	} else {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("Invalid token claims or token invalid:", err)
+		utils.WriteAPIResponse(w, response)
 		return
 	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok || !token.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := utils.APIResponse{
+			ErrorCode: errors.BadJWT,
+			Message:   "Malformed/Invalid auth token",
+		}
+		utils.WriteAPIResponse(w, response)
+		return
+	}
+
+	subject, ok := claims["sub"].(string)
+
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := utils.APIResponse{
+			ErrorCode: errors.BadJWT,
+			Message:   "Invalid subject in auth token",
+		}
+		utils.WriteAPIResponse(w, response)
+		return
+	}
+
+	response := utils.APIResponse{
+		Message: "Authorized",
+		Data: map[string]interface{}{
+			"username":     subject,
+			"uploadFolder": subject,
+		},
+	}
+	w.WriteHeader(http.StatusOK)
+	utils.WriteAPIResponse(w, response)
 }
