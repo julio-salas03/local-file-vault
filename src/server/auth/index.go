@@ -5,10 +5,9 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"local-file-vault/db"
-	"local-file-vault/errors"
+	"local-file-vault/api"
+	"local-file-vault/errorcodes"
 	"local-file-vault/utils"
 	"log"
 	"net/http"
@@ -59,15 +58,24 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		fmt.Println(err)
+		response := api.Response{
+			ErrorCode: errorcodes.BadRequest,
+			Message:   "Malformed/Invalid form data",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		api.WriteResponse(w, response)
 		return
 	}
+
 	username := strings.TrimSpace(r.Form.Get("username"))
 
 	if username == "" {
+		response := api.Response{
+			ErrorCode: errorcodes.BadRequest,
+			Message:   "Missing 'username' in request data",
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request. Need to provide a username to authenticate"))
+		api.WriteResponse(w, response)
 		return
 	}
 
@@ -75,21 +83,24 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	var dbPassword string
 	var salt string
 
-	err = db.Query(func(conn *pgx.Conn) error {
+	err = utils.Query(func(conn *pgx.Conn) error {
 		return conn.QueryRow(context.Background(), "select username, salt, password from users where username=$1", username).Scan(&dbUser, &salt, &dbPassword)
 	})
 
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		fmt.Println(err)
+		api.InternalServerError(w)
 		return
 	}
 
 	password := strings.TrimSpace(r.Form.Get("password"))
 
 	if password == "" {
+		response := api.Response{
+			ErrorCode: errorcodes.BadRequest,
+			Message:   "Missing 'password' in request data",
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Bad Request. Need to provide a password to authenticate"))
+		api.WriteResponse(w, response)
 		return
 	}
 
@@ -98,16 +109,14 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	saltBytes, err := hex.DecodeString(salt)
 
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		fmt.Println(err)
+		api.InternalServerError(w)
 		return
 	}
 
 	encoded, err := argon.Hash([]byte(password), saltBytes)
 
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		fmt.Println(err)
+		api.InternalServerError(w)
 		return
 	}
 
@@ -121,8 +130,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	token, err := GenerateAuthenticationJWT(dbUser)
 
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		fmt.Println(err)
+		api.InternalServerError(w)
 		return
 	}
 
@@ -139,16 +147,17 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(time.Until(expirationTime).Seconds()),
 	}
 
-	response := map[string]string{
-		"username":     dbUser,
-		"uploadFolder": dbUser,
+	response := api.Response{
+		Message: "Authenticated",
+		Data: map[string]interface{}{
+			"username":     dbUser,
+			"uploadFolder": dbUser,
+		},
 	}
 
 	http.SetCookie(w, &cookie)
 
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	api.WriteResponse(w, response)
 }
 
 func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
@@ -156,28 +165,28 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		response := utils.APIResponse{
-			ErrorCode: errors.Unauthorized,
+		response := api.Response{
+			ErrorCode: errorcodes.Unauthorized,
 			Message:   fmt.Sprintf("Missing '%s' cookie in request header", AuthCookieName),
 		}
-		utils.WriteAPIResponse(w, response)
+		api.WriteResponse(w, response)
 		return
 	}
 
 	token, err := jwt.Parse(authCookie.Value, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return base64.StdEncoding.DecodeString(GetJWTSecret())
 	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		response := utils.APIResponse{
-			ErrorCode: errors.BadJWT,
+		response := api.Response{
+			ErrorCode: errorcodes.BadJWT,
 			Message:   err.Error(),
 		}
-		utils.WriteAPIResponse(w, response)
+		api.WriteResponse(w, response)
 		return
 	}
 
@@ -185,11 +194,11 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	if !ok || !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
-		response := utils.APIResponse{
-			ErrorCode: errors.BadJWT,
+		response := api.Response{
+			ErrorCode: errorcodes.BadJWT,
 			Message:   "Malformed/Invalid auth token",
 		}
-		utils.WriteAPIResponse(w, response)
+		api.WriteResponse(w, response)
 		return
 	}
 
@@ -197,15 +206,15 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
-		response := utils.APIResponse{
-			ErrorCode: errors.BadJWT,
+		response := api.Response{
+			ErrorCode: errorcodes.BadJWT,
 			Message:   "Invalid subject in auth token",
 		}
-		utils.WriteAPIResponse(w, response)
+		api.WriteResponse(w, response)
 		return
 	}
 
-	response := utils.APIResponse{
+	response := api.Response{
 		Message: "Authorized",
 		Data: map[string]interface{}{
 			"username":     subject,
@@ -213,5 +222,5 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	w.WriteHeader(http.StatusOK)
-	utils.WriteAPIResponse(w, response)
+	api.WriteResponse(w, response)
 }

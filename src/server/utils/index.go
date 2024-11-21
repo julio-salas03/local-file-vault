@@ -1,15 +1,13 @@
 package utils
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 
-	"github.com/joho/godotenv"
+	"github.com/jackc/pgx/v5"
 )
 
 func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request) {
@@ -37,39 +35,16 @@ func ServeOptimizedFile(filename string, w http.ResponseWriter, r *http.Request)
 	w.Write(bytes)
 }
 
-func LoadEnvFile() {
-	directory, err := os.Getwd()
+func Query(callback func(conn *pgx.Conn) error) error {
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 
 	if err != nil {
-		log.Fatal("Could read working directory. Unable to load .env file")
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
 	}
 
-	godotenv.Load(path.Join(directory, ".env"))
-}
+	defer conn.Close(context.Background())
 
-type APIResponse struct {
-	ErrorCode string                 `json:"errorCode,omitempty"`
-	Data      map[string]interface{} `json:"data,omitempty"`
-	Message   string                 `json:"message"`
-}
+	return callback(conn)
 
-func WriteAPIResponse(w http.ResponseWriter, response APIResponse) {
-	responseType := "success"
-
-	if response.ErrorCode != "" {
-		responseType = "error"
-	}
-
-	wrappedResponse := struct {
-		APIResponse
-		Type string `json:"type"`
-	}{
-		APIResponse: response,
-		Type:        responseType,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(wrappedResponse); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
 }
