@@ -54,6 +54,40 @@ func GenerateAuthenticationJWT(user string) (string, error) {
 	return tokenString, nil
 }
 
+func GetUserFromAuthCookie(cookieValue string) (string, error) {
+	token, err := jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return base64.StdEncoding.DecodeString(GetJWTSecret())
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+
+	if !ok || !token.Valid {
+		return "", fmt.Errorf("malformed/invalid auth token")
+	}
+
+	subject, ok := claims["sub"].(string)
+
+	if !ok || !token.Valid {
+		return "", fmt.Errorf("invalid subject in auth token")
+	}
+
+	return subject, nil
+}
+
+func BuildUserData(user string) map[string]interface{} {
+	return map[string]interface{}{
+		"username":     user,
+		"uploadFolder": user,
+	}
+}
+
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 
@@ -123,7 +157,12 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	hashedPassword := string(encoded.Encode()[:])
 
 	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(dbPassword)) != 1 {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		response := api.Response{
+			ErrorCode: errorcodes.InvalidCredentials,
+			Message:   "Invalid username or password",
+		}
+		api.WriteResponse(w, response)
 		return
 	}
 
@@ -149,10 +188,7 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	response := api.Response{
 		Message: "Authenticated",
-		Data: map[string]interface{}{
-			"username":     dbUser,
-			"uploadFolder": dbUser,
-		},
+		Data:    BuildUserData(dbUser),
 	}
 
 	http.SetCookie(w, &cookie)
@@ -173,12 +209,7 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := jwt.Parse(authCookie.Value, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return base64.StdEncoding.DecodeString(GetJWTSecret())
-	})
+	username, err := GetUserFromAuthCookie(authCookie.Value)
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -190,37 +221,11 @@ func HandleAuthenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if !ok || !token.Valid {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := api.Response{
-			ErrorCode: errorcodes.BadJWT,
-			Message:   "Malformed/Invalid auth token",
-		}
-		api.WriteResponse(w, response)
-		return
-	}
-
-	subject, ok := claims["sub"].(string)
-
-	if !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := api.Response{
-			ErrorCode: errorcodes.BadJWT,
-			Message:   "Invalid subject in auth token",
-		}
-		api.WriteResponse(w, response)
-		return
-	}
-
 	response := api.Response{
 		Message: "Authorized",
-		Data: map[string]interface{}{
-			"username":     subject,
-			"uploadFolder": subject,
-		},
+		Data:    BuildUserData(username),
 	}
+
 	w.WriteHeader(http.StatusOK)
 	api.WriteResponse(w, response)
 }

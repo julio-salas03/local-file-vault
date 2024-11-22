@@ -4,6 +4,8 @@ import { Label } from './ui/label';
 import { TextField, TextFieldInput } from './ui/text-field';
 import { toast } from 'solid-sonner';
 import { AUTH_USER_SCHEMA, useAuthContext } from '../lib/auth';
+import { ServerResponseSchema } from '@/lib/utils';
+import { APIError } from '@/lib/errors';
 
 const LoginForm: Component = () => {
   const { setAuth } = useAuthContext();
@@ -11,18 +13,24 @@ const LoginForm: Component = () => {
     <form
       onSubmit={async function (e) {
         e.preventDefault();
-        const response = await fetch('/api/user/login', {
-          method: 'POST',
-          body: new FormData(e.currentTarget),
-        });
-        const data = await response.json();
-        const parse = AUTH_USER_SCHEMA.safeParse(data);
+        try {
+          const response = await fetch('/api/user/login', {
+            method: 'POST',
+            body: new FormData(e.currentTarget),
+          });
+          const data = await response.json();
+          const schema = ServerResponseSchema(AUTH_USER_SCHEMA);
+          const parse = schema.parse(data);
 
-        if (!parse.success) {
-          return toast("Couldn't log you in");
+          if (parse.type === 'error') {
+            throw new APIError(parse.message, parse.errorCode);
+          }
+          setAuth('authUser', parse.data);
+          toast('Logged In');
+        } catch (error) {
+          console.error(error);
+          toast("Couldn't log you in");
         }
-        setAuth('authUser', parse.data);
-        toast('Logged In');
       }}
       class="space-y-3"
     >

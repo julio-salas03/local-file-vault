@@ -5,4 +5,5 @@ const (
 	Unauthorized        = "unauthorized"
 	BadJWT              = "bad_jwt"
 	BadRequest          = "bad_request"
+	InvalidCredentials  = "invalid_credentials"
 )

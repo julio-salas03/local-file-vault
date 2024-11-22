@@ -1,10 +1,10 @@
 package uploads
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"local-file-vault/api"
+	"local-file-vault/auth"
 	"net/http"
 	"net/url"
 	"os"
@@ -49,20 +49,21 @@ func HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Successfully uploaded file")
 }
 
-func GetFiles(w http.ResponseWriter, r *http.Request) {
-	entries, err := os.ReadDir("uploads/shared")
-
-	if err != nil {
-		log.Fatal(err)
-	}
+func GetFilesFromFolder(folder string) ([]map[string]interface{}, error) {
+	entries, err := os.ReadDir(fmt.Sprintf("uploads/%s", folder))
 
 	var files []map[string]interface{}
+
+	if err != nil {
+		return files, fmt.Errorf("couldn't read files from %s", folder)
+	}
 
 	for _, entry := range entries {
 
 		if entry.IsDir() {
 			continue
 		}
+
 		file, err := entry.Info()
 
 		if err != nil {
@@ -82,14 +83,48 @@ func GetFiles(w http.ResponseWriter, r *http.Request) {
 			"size":     file.Size(),
 			"lastmod":  file.ModTime().UTC(),
 			"download": download,
+			"owner":    folder,
 		}
 
 		files = append(files, fileData)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	return files, nil
+}
 
-	if err := json.NewEncoder(w).Encode(files); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+func GetFiles(w http.ResponseWriter, r *http.Request) {
+
+	var allowedFolders []string
+
+	allowedFolders = append(allowedFolders, "shared")
+
+	if authCookie, err := r.Cookie(auth.AuthCookieName); err == nil && authCookie.Value != "" {
+		username, err := auth.GetUserFromAuthCookie(authCookie.Value)
+		if err == nil && username != "" {
+			allowedFolders = append(allowedFolders, username)
+		}
 	}
+
+	var files []map[string]interface{}
+
+	for i := 0; i < len(allowedFolders); i++ {
+		folder := allowedFolders[i]
+		_files, err := GetFilesFromFolder(folder)
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		files = append(files, _files...)
+	}
+
+	response := api.Response{
+		Message: fmt.Sprintf("Successfully retrieved %d files", len(files)),
+		Data: map[string]interface{}{
+			"files": files,
+		},
+	}
+
+	api.WriteResponse(w, response)
 }
