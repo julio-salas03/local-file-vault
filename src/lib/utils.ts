@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { z } from 'zod';
+import { API_ERROR_CODES } from './errors';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,6 +36,23 @@ export const filesizeToHumanReadable = (
   return size + 'B';
 };
 
+/**
+ * Allows to generate a `z.union` from dynamic `z.literal`'s.
+ *
+ * Code taken from https://github.com/colinhacks/zod/discussions/2790#discussioncomment-7096060
+ */
+
+export function unionOfLiterals<T extends string | number>(
+  constants: readonly T[]
+) {
+  const literals = constants.map(x => z.literal(x)) as unknown as readonly [
+    z.ZodLiteral<T>,
+    z.ZodLiteral<T>,
+    ...z.ZodLiteral<T>[],
+  ];
+  return z.union(literals);
+}
+
 export function ServerResponseSchema<T extends z.ZodType>(data: T) {
   const successfulResponse = z.object({
     data,
@@ -43,7 +61,7 @@ export function ServerResponseSchema<T extends z.ZodType>(data: T) {
   });
 
   const errorResponse = z.object({
-    errorCode: z.string(),
+    errorCode: unionOfLiterals(Object.values(API_ERROR_CODES)),
     message: z.string(),
     type: z.literal('error'),
   });

@@ -1,9 +1,10 @@
 package errorcodes
 
 const (
-	InternalServerError = "internal_server_error"
-	Unauthorized        = "unauthorized"
-	BadJWT              = "bad_jwt"
-	BadRequest          = "bad_request"
+	// AUTO-ADD
 	InvalidCredentials  = "invalid_credentials"
+	BadRequest          = "bad_request"
+	BadJWT              = "bad_jwt"
+	Unauthorized        = "unauthorized"
+	InternalServerError = "internal_server_error"
 )

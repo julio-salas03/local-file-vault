@@ -12,7 +12,8 @@
     "build:go": "go build -C src/server -o \"$(pwd)/dist/main\"",
     "prettier:write": "prettier --write .",
     "prettier:check": "prettier --check .",
-    "init": "./scripts/init/start.sh"
+    "init": "./scripts/init/start.sh",
+    "plop": "plop --plopfile scripts/plop/index.mjs"
   },
   "license": "MIT",
   "devDependencies": {
@@ -34,6 +35,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
+    "plop": "^4.0.1",
     "solid-js": "^1.8.11",
     "solid-sonner": "^0.2.8",
     "tailwind-children": "^0.5.0",

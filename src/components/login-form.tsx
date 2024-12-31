@@ -5,7 +5,7 @@ import { TextField, TextFieldInput } from './ui/text-field';
 import { toast } from 'solid-sonner';
 import { AUTH_USER_SCHEMA, useAuthContext } from '../lib/auth';
 import { ServerResponseSchema } from '@/lib/utils';
-import { APIError } from '@/lib/errors';
+import { API_ERROR_CODES, APIError } from '@/lib/errors';
 
 const LoginForm: Component = () => {
   const { setAuth } = useAuthContext();
@@ -26,10 +26,17 @@ const LoginForm: Component = () => {
             throw new APIError(parse.message, parse.errorCode);
           }
           setAuth('authUser', parse.data);
-          toast('Logged In');
+          toast('Logged In!');
         } catch (error) {
-          console.error(error);
-          toast("Couldn't log you in");
+          if (error instanceof APIError) {
+            if (error.errorCode === API_ERROR_CODES.INVALID_CREDENTIALS) {
+              toast(
+                'Your username and password did not match. Verify your credentials and try again'
+              );
+              return;
+            }
+          }
+          toast("An unknown error has occurred and we couldn't log you in");
         }
       }}
       class="space-y-3"
